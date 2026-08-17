@@ -46,3 +46,26 @@ jobs:
             FILTER_REGEX_INCLUDE: ^src/.*
             VALIDATE_JAVA: true
             VALIDATE_GOOGLE_JAVA_FORMAT: true
+    build-test-analyse:
+      name: application-building-testing-analysing
+      needs: ["lint","gitleaks"]
+      runs-on: ubuntu-latest
+      steps:
+        - name: checkout repo
+          uses: actions/checkout@v7
+        - name: setup java
+          uses: actions/setup-java@v4
+          with:
+            java-version: '17'
+            distribution: 'temurin'
+            cache: maven
+        # - name: download dependencies  === maven automatically downloads dependencies
+        #   run: mvn dependency:go-offline
+        - name: build application
+          run: mvn clean package -DskipTests
+        - name: test application
+          run: mvn test
+        -  name: analyze
+           env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+           run: mvn -B sonar:sonar -Dsonar.projectKey=Keerthan2006_java-devsecops-cicd
