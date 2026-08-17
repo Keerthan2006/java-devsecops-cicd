@@ -18,3 +18,17 @@ jobs:
               run: sudo apt update && sudo apt install gitleaks
             - name: scan
               run: gitleaks detect --source . --verbose
+    lint:
+      name: super-linter
+      runs-on: ubuntu-latest
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v7
+           with:
+            fetch-depth: 0
+
+         - name: Super-linter
+           uses: super-linter/super-linter@v8.7.0
+           env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            DEFAULT_BRANCH: main
