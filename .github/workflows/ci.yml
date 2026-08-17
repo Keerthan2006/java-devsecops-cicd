@@ -1,0 +1,20 @@
+name: java-ci
+
+on:
+    push:
+        branches: [ "main" ]
+    pull_request:
+        branches: [ "main" ]
+    workflow_dispatch:
+
+jobs:
+    gitleaks:
+        name: secretes scanning
+        runs-on: ubuntu-latest
+        steps:
+            - name: checkout repo
+              uses: actions/checkout@v7
+            - name: install
+              run: sudo apt update && sudo apt install gitleaks
+            - name: scan
+              run: gitleaks detect --source . --verbose
