@@ -32,3 +32,4 @@ jobs:
            env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             DEFAULT_BRANCH: main
+            FILTER_REGEX_INCLUDE: .*src/.*
