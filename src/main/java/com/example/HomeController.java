@@ -11,7 +11,6 @@ public class HomeController {
         return """
                 <h1>Java CI/CD Demo</h1>
                 <p>Application is running successfully!</p>
-                <p>String githubToken = "ghp_1234567890abcdefghijklmnopqrstuvwxyz123456";</p>
                 """;
     }
 
