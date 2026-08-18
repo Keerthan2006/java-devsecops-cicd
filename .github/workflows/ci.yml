@@ -80,14 +80,14 @@ jobs:
         - name: checkout repo
           uses: actions/checkout@v7
         - name: docker login
-          uses: docker/login-action@v4
+          uses: docker/login-action@49c5831d4b169f744e666596d51a030a35255268
           with:
             username: ${{ vars.DOCKERHUB_USERNAME }}
             password: ${{ secrets.DOCKERHUB_TOKEN }}
         - name: docker build
           run: docker build -t ${{ vars.DOCKERHUB_USERNAME }}/java-app-deploy:${{ github.sha }} .
         - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@v0.36.0
+          uses: aquasecurity/trivy-action@49c5831d4b169f744e666596d51a030a35255268
           with:
             image-ref: '${{ vars.DOCKERHUB_USERNAME }}/java-app-deploy:${{ github.sha }}'
             format: 'table'
