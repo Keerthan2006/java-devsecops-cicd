@@ -104,6 +104,8 @@ jobs:
         - name: docker push
           run: docker push ${{ vars.DOCKERHUB_USERNAME }}/java-app-deploy:${{ github.sha }}
     update-tag:
+      permissions:
+        contents: write
       name: helm-tag
       needs: docker
       runs-on: ubuntu-latest
