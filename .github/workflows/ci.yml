@@ -3,8 +3,14 @@ name: java-ci
 on:
     push:
         branches: [ "main" ]
+        paths-ignore:
+          - 'java-app/**'
+          - 'kubernetes/**'
     pull_request:
         branches: [ "main" ]
+        paths-ignore:
+          - 'java-app/**'
+          - 'kubernetes/**'
     workflow_dispatch:
 
 jobs:
@@ -97,3 +103,20 @@ jobs:
             severity: 'CRITICAL,HIGH'
         - name: docker push
           run: docker push ${{ vars.DOCKERHUB_USERNAME }}/java-app-deploy:${{ github.sha }}
+    update-tag:
+      name: helm-tag
+      needs: docker
+      runs-on: ubuntu-latest
+      steps:
+        - name: checkout repo
+          uses: actions/checkout@v7
+        - name: update tag
+          run: |
+            sed -i "s/tag:.*/tag: \"${{ github.sha }}\"/" java-app/values.yaml
+        - name: git add-push
+          run: |
+            git config --global user.name ${{ vars.username }}
+            git config --global user.email ${{ secrets.email }}
+            git add java-app/values.yaml
+            git diff --cached --quiet || git commit -m "updating helm value"
+            git push
