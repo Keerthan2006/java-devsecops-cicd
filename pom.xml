@@ -17,49 +17,48 @@
     <properties>
         <java.version>17</java.version>
         <sonar.organization>keerthan2006</sonar.organization>
+
+        <!-- CVE fixes -->
+        <jackson-bom.version>2.21.4</jackson-bom.version>
+        <tomcat.version>10.1.55</tomcat.version>
+        <spring-framework.version>6.2.19</spring-framework.version>
     </properties>
+
     <dependencies>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        
-        <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
 
         <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-test</artifactId>
-        <scope>test</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
-
 
     </dependencies>
 
     <build>
-             
+
         <finalName>app</finalName>
 
         <plugins>
             <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-pmd-plugin</artifactId>
-                  <version>3.22.0</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.22.0</version>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-         <plugin>
-             <groupId>com.github.spotbugs</groupId>
-             <artifactId>spotbugs-maven-plugin</artifactId>
-             <version>4.8.6.2</version>
-         </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.8.6.2</version>
+            </plugin>
         </plugins>
     </build>
 
 </project>
-
