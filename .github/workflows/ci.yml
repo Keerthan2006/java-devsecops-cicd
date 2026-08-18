@@ -109,6 +109,8 @@ jobs:
       name: helm-tag
       needs: docker
       runs-on: ubuntu-latest
+      env:
+        SECRET: ${{ secrets.email }}
       steps:
         - name: checkout repo
           uses: actions/checkout@v7
@@ -118,7 +120,7 @@ jobs:
         - name: git add-push
           run: |
             git config --global user.name ${{ vars.username }}
-            git config --global user.email ${{ secrets.email }}
+            git config --global user.email "$SECRET"
             git add java-app/values.yaml
             git diff --cached --quiet || git commit -m "updating helm value"
             git push
