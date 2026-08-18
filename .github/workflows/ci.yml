@@ -15,15 +15,15 @@ on:
 
 jobs:
     gitleaks:
-        name: secretes scanning
+        name: secrets scanning
         runs-on: ubuntu-latest
         steps:
             - name: checkout repo
               uses: actions/checkout@v7
-            - name: install
-              run: sudo apt update && sudo apt install gitleaks
-            - name: scan
-              run: gitleaks detect --source . --verbose
+            - name: Gitleaks
+              uses: gitleaks/gitleaks-action@v2
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     lint:
       name: super-linter
       runs-on: ubuntu-latest
