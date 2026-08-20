@@ -32,7 +32,7 @@ Install the following CLI tools before you begin:
 aws configure
 ```
 
-Enter your AWS Access Key ID, Secret Access Key, default region, and output format when prompted.
+Enter your AWS Access_Key_ID, Secret_Access_Key, default region, and output format when prompted.
 
 ## 2. Create the EKS Cluster
 
