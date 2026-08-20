@@ -11,7 +11,7 @@ public class HomeController {
         return """
                 <h1>Java CI/CD Demo</h1>
                 <p> Implementing DevSecOps Pipeline for a Java Application </p>
-                <p>Application is running successfully!</p>
+                <p>Application is running successfully! after passing all security scans</p>
                 """;
     }
 
