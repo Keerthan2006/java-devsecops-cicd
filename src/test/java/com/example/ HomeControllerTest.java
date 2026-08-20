@@ -22,7 +22,14 @@ class HomeControllerTest {
     void testHomeEndpoint() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Java CI/CD Demo")));
+                .andExpect(content().string(containsString("Java DevSecOps CI/CD")));
+    }
+
+    @Test
+    void testHomeEndpointShowsPipelineStatus() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Application is running successfully")));
     }
 
     @Test
