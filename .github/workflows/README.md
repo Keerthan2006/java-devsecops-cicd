@@ -50,7 +50,7 @@ Depends on: `update-tag`
 
 ```
 gitleaks ─┐
-          ├─► build-test-analyse ─► docker ─► update-tag ─► dast
+          ├─► build-test-analyse ─► docker ─► update-tag ─► dast.
 lint ─────┘
 ```
 

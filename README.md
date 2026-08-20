@@ -33,30 +33,6 @@ The core idea behind this project is "shift-left security" — catching vulnerab
 | GitOps / Deployment | ArgoCD |
 | Networking | AWS Load Balancer Controller (ALB) |
 
-## Architecture
-
-A simplified view of how a code change moves from commit to a running service on EKS:
-
-```mermaid
-flowchart LR
-    Dev[Developer] --> Repo[GitHub Repo]
-    Repo --> CI[CI Pipeline\nlint, build, scan]
-    CI --> Hub[Docker Hub]
-    CI --> Repo
-    Repo --> Argo[ArgoCD]
-    Argo --> EKS[EKS Cluster]
-    Hub --> EKS
-    EKS --> ALB[Load Balancer]
-    ALB --> User[End User]
-```
-
-**Flow summary:**
-
-1. Developer pushes code to GitHub.
-2. The CI pipeline lints, builds, tests, and security-scans the code and Docker image, then pushes the image to Docker Hub and updates the Helm chart's image tag in the repo.
-3. ArgoCD detects the change and syncs the new version to the EKS cluster (GitOps).
-4. The AWS Load Balancer Controller exposes the app via an ALB, which serves end-user traffic.
-
 ### Project Journey
 
 The project was built incrementally, validating each layer before moving to the next:
@@ -95,6 +71,30 @@ The project was built incrementally, validating each layer before moving to the 
 ├── iam_policy.json       # IAM policy for AWS Load Balancer Controller
 └── pom.xml              # Maven project configuration
 ```
+## Architecture
+
+A simplified view of how a code change moves from commit to a running service on EKS:
+
+```mermaid
+flowchart LR
+    Dev[Developer] --> Repo[GitHub Repo]
+    Repo --> CI[CI Pipeline\nlint, build, scan]
+    CI --> Hub[Docker Hub]
+    CI --> Repo
+    Repo --> Argo[ArgoCD]
+    Argo --> EKS[EKS Cluster]
+    Hub --> EKS
+    EKS --> ALB[Load Balancer]
+    ALB --> User[End User]
+```
+
+**Flow summary:**
+
+1. Developer pushes code to GitHub.
+2. The CI pipeline lints, builds, tests, and security-scans the code and Docker image, then pushes the image to Docker Hub and updates the Helm chart's image tag in the repo.
+3. ArgoCD detects the change and syncs the new version to the EKS cluster (GitOps).
+4. The AWS Load Balancer Controller exposes the app via an ALB, which serves end-user traffic.
+
 
 ### Documentation
 
