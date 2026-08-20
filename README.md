@@ -33,37 +33,86 @@ The core idea behind this project is "shift-left security" — catching vulnerab
 | GitOps / Deployment | ArgoCD |
 | Networking | AWS Load Balancer Controller (ALB) |
 
+## Architecture
+
+The diagram below shows how a code change flows from a developer's machine to a running, internet-facing service on EKS.
+
+```mermaid
+flowchart TD
+    Dev[Developer] -->|git push| Repo[GitHub Repository]
+
+    subgraph CI["CI Pipeline - GitHub Actions"]
+        direction TB
+        Sec[Gitleaks - Secret Scan] --> Lint[Super-Linter]
+        Lint --> Build[Maven Build and Test]
+        Build --> Sonar[SonarQube - SAST]
+        Sonar --> DockerBuild[Docker Build]
+        DockerBuild --> Trivy[Trivy - Image Scan]
+        Trivy --> Push[Push Image to Docker Hub]
+        Push --> Tag[Update Helm values.yaml with new tag]
+    end
+
+    Repo --> CI
+    Tag -->|git commit and push| Repo
+
+    subgraph CD["CD - GitOps"]
+        direction TB
+        Argo[ArgoCD] -->|watches java-app/values.yaml| EKS
+    end
+
+    Repo -->|detects change| Argo
+
+    subgraph EKS["Amazon EKS Cluster - Fargate"]
+        direction TB
+        NS1[application namespace] --> Pods[App Pods]
+        NS2[argocd namespace] --> Argo
+        ALBC[AWS Load Balancer Controller] --> ALB[Application Load Balancer]
+        Pods --> ALBC
+    end
+
+    ALB -->|HTTP| User[End User]
+
+    subgraph DAST["Post-Deploy Verification"]
+        direction TB
+        Health[Health Check Poll] --> ZAP[OWASP ZAP Baseline Scan]
+    end
+
+    ALB --> DAST
+```
+
+**Flow summary:**
+
+1. A developer pushes code to the GitHub repository.
+2. GitHub Actions runs the DevSecOps pipeline — secret scanning, linting, build/test, static analysis, Docker build, image vulnerability scanning, and pushes the image to Docker Hub.
+3. The pipeline updates the image tag in `java-app/values.yaml` and commits it back to the repo.
+4. ArgoCD, running in the `argocd` namespace on EKS, detects the change and syncs the new version into the `application` namespace (GitOps).
+5. The AWS Load Balancer Controller provisions/updates an ALB, routing external traffic to the application pods.
+6. Post-deployment, the pipeline verifies the app is healthy and runs an OWASP ZAP scan against the live ALB endpoint.
+
 ### Project Journey
 
-The application was first built and verified locally to ensure it worked before any automation was introduced:
+The project was built incrementally, validating each layer before moving to the next:
 
-```bash
-mvn dependency:go-offline
-mvn clean package -DskipTests
-java -jar target/app.jar
-mvn test
-```
+1. **Local testing** — Verified the application ran correctly before introducing any automation:
 
-Once local testing confirmed the app was healthy, it was containerized using a multi-stage Dockerfile — a Maven-based builder stage to compile the application, and a lightweight **distroless** runtime image to minimize the attack surface and image size:
+   ```bash
+   mvn dependency:go-offline
+   mvn clean package -DskipTests
+   java -jar target/app.jar
+   mvn test
+   ```
 
-```dockerfile
-# Stage 1
-FROM maven:3.9.16-eclipse-temurin-17-alpine AS builder
-WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline
-COPY . .
-RUN mvn clean package -DskipTests
+2. **Containerization** — Created a multi-stage, distroless [`Dockerfile`](./Dockerfile) to package the application into a minimal, secure runtime image.
 
-# Stage 2
-FROM gcr.io/distroless/java17-debian13
-WORKDIR /app
-COPY --from=builder /app/target/*.jar ./app.jar
-EXPOSE 9090
-ENTRYPOINT [ "java","-jar","app.jar" ]
-```
+3. **Kubernetes manifests** — Wrote the core `deployment.yml`, `service.yml`, and `ingress.yml` manifests to define how the application runs and is exposed inside the cluster.
 
-With the application containerized, the project moved on to building the CI/CD pipeline and the supporting Kubernetes/GitOps infrastructure documented in this repository.
+4. **Helm chart** — Converted the manifests into a Helm chart using `helm create <chart-name>`, making the deployment configurable and versioned via `values.yaml`.
+
+5. **CI pipeline** — Built out the GitHub Actions pipeline covering secret scanning, linting, build/test, static analysis, Docker image build and scanning, and the automated Helm tag update (`gitleaks` → `lint` → `build-test-analyse` → `docker` → `update-tag`).
+
+6. **EKS & ArgoCD setup** — Provisioned the Amazon EKS cluster and installed ArgoCD to continuously sync the Helm chart from this repository to the cluster (GitOps).
+
+7. **DAST** — Added a final pipeline stage to verify the live deployment's health and run an OWASP ZAP baseline scan against the running application.
 
 ### Repository Structure
 
@@ -81,13 +130,10 @@ With the application containerized, the project moved on to building the CI/CD p
 
 ### Documentation
 
-This project's documentation is split across three READMEs:
+This README covers the project overview, architecture, and journey. Two areas are documented in more depth in their own READMEs, linked in context below:
 
-| README | Location | Covers |
-|---|---|---|
-| Project Introduction (this file) | `/README.md` | Project overview, tech stack, and journey |
-| CI/CD Pipeline | [`.github/workflows/README.md`](.github/workflows/README.md) | Full breakdown of the GitHub Actions pipeline stages |
-| EKS & ArgoCD Setup | [`java-app/README.md`](java-app/README.md) | Provisioning EKS, installing ArgoCD, and exposing the app via ALB |
+- The CI pipeline (stages `gitleaks` → `lint` → `build-test-analyse` → `docker` → `update-tag` → `dast`, required secrets/variables, and the tools used) is explained in detail in **[`.github/workflows/README.md`](.github/workflows/README.md)**.
+- Provisioning the EKS cluster, installing ArgoCD, and setting up the AWS Load Balancer Controller to expose the app is explained step-by-step in **[`java-app/README.md`](java-app/README.md)**.
 
 ### Resources Followed
 
