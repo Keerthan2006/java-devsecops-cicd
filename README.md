@@ -35,59 +35,27 @@ The core idea behind this project is "shift-left security" — catching vulnerab
 
 ## Architecture
 
-The diagram below shows how a code change flows from a developer's machine to a running, internet-facing service on EKS.
+A simplified view of how a code change moves from commit to a running service on EKS:
 
 ```mermaid
-flowchart TD
-    Dev[Developer] -->|git push| Repo[GitHub Repository]
-
-    subgraph CI["CI Pipeline - GitHub Actions"]
-        direction TB
-        Sec[Gitleaks - Secret Scan] --> Lint[Super-Linter]
-        Lint --> Build[Maven Build and Test]
-        Build --> Sonar[SonarQube - SAST]
-        Sonar --> DockerBuild[Docker Build]
-        DockerBuild --> Trivy[Trivy - Image Scan]
-        Trivy --> Push[Push Image to Docker Hub]
-        Push --> Tag[Update Helm values.yaml with new tag]
-    end
-
-    Repo --> CI
-    Tag -->|git commit and push| Repo
-
-    subgraph CD["CD - GitOps"]
-        direction TB
-        Argo[ArgoCD] -->|watches java-app/values.yaml| EKS
-    end
-
-    Repo -->|detects change| Argo
-
-    subgraph EKS["Amazon EKS Cluster - Fargate"]
-        direction TB
-        NS1[application namespace] --> Pods[App Pods]
-        NS2[argocd namespace] --> Argo
-        ALBC[AWS Load Balancer Controller] --> ALB[Application Load Balancer]
-        Pods --> ALBC
-    end
-
-    ALB -->|HTTP| User[End User]
-
-    subgraph DAST["Post-Deploy Verification"]
-        direction TB
-        Health[Health Check Poll] --> ZAP[OWASP ZAP Baseline Scan]
-    end
-
-    ALB --> DAST
+flowchart LR
+    Dev[Developer] --> Repo[GitHub Repo]
+    Repo --> CI[CI Pipeline\nlint, build, scan]
+    CI --> Hub[Docker Hub]
+    CI --> Repo
+    Repo --> Argo[ArgoCD]
+    Argo --> EKS[EKS Cluster]
+    Hub --> EKS
+    EKS --> ALB[Load Balancer]
+    ALB --> User[End User]
 ```
 
 **Flow summary:**
 
-1. A developer pushes code to the GitHub repository.
-2. GitHub Actions runs the DevSecOps pipeline — secret scanning, linting, build/test, static analysis, Docker build, image vulnerability scanning, and pushes the image to Docker Hub.
-3. The pipeline updates the image tag in `java-app/values.yaml` and commits it back to the repo.
-4. ArgoCD, running in the `argocd` namespace on EKS, detects the change and syncs the new version into the `application` namespace (GitOps).
-5. The AWS Load Balancer Controller provisions/updates an ALB, routing external traffic to the application pods.
-6. Post-deployment, the pipeline verifies the app is healthy and runs an OWASP ZAP scan against the live ALB endpoint.
+1. Developer pushes code to GitHub.
+2. The CI pipeline lints, builds, tests, and security-scans the code and Docker image, then pushes the image to Docker Hub and updates the Helm chart's image tag in the repo.
+3. ArgoCD detects the change and syncs the new version to the EKS cluster (GitOps).
+4. The AWS Load Balancer Controller exposes the app via an ALB, which serves end-user traffic.
 
 ### Project Journey
 
